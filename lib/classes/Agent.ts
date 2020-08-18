@@ -164,11 +164,10 @@ export class Agent
     }
     sendAgentUpdate()
     {
-        if (!this.currentRegion)
-        {
+        const circuit = this.currentRegion.circuit;
+        if (!this.currentRegion || !circuit.active) {
             return;
         }
-        const circuit = this.currentRegion.circuit;
         const agentUpdate: AgentUpdateMessage = new AgentUpdateMessage();
         agentUpdate.AgentData = {
             AgentID: this.agentID,
