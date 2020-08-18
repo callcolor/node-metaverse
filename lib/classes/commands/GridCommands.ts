@@ -180,7 +180,7 @@ export class GridCommands extends CommandsBase
                 {
                     responseMsg2.Data.forEach((data) =>
                     {
-                        for (let index = 0; index <= data.Extra; index++) {
+                        for (let index = 0; index < data.Extra; index++) {
                             response.avatars.push(new Vector2([
                                 data.X,
                                 data.Y
