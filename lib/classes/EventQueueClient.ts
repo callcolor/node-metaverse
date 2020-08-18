@@ -388,6 +388,8 @@ export class EventQueueClient
 
                                         break;
                                     }
+                                    case 'BulkUpdateInventory':
+                                        console.log('Unhandled event:', 'BulkUpdateInventory');
                                     default:
                                         console.log('Unhandled event:');
                                         console.log(JSON.stringify(event, null, 4));
