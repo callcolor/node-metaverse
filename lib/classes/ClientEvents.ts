@@ -31,6 +31,7 @@ import { InventoryResponseEvent } from '../events/InventoryResponseEvent';
 import { LandStatsEvent } from '../events/LandStatsEvent';
 import { SimStatsEvent } from '../events/SimStatsEvent';
 import { BalanceUpdatedEvent } from '../events/BalanceUpdatedEvent';
+import { EnableSimulatorMessage } from './MessageClasses';
 
 export class ClientEvents
 {
@@ -69,4 +70,5 @@ export class ClientEvents
     onLandStatReplyEvent: Subject<LandStatsEvent> = new Subject<LandStatsEvent>();
     onSimStats: Subject<SimStatsEvent> = new Subject<SimStatsEvent>();
     onBalanceUpdated: Subject<BalanceUpdatedEvent> = new Subject<BalanceUpdatedEvent>();
+    onEnableSimulatorEvent: Subject<EnableSimulatorMessage> = new Subject<EnableSimulatorMessage>();
 }

@@ -22,6 +22,7 @@ import { LandStatsEvent } from '../events/LandStatsEvent';
 import * as LLSD from '@caspertech/llsd';
 import * as request from 'request';
 import * as Long from 'long';
+import { EnableSimulatorMessage } from './MessageClasses';
 
 export class EventQueueClient
 {
@@ -94,23 +95,16 @@ export class EventQueueClient
                                 switch (event['message'])
                                 {
                                     case 'EnableSimulator':
-
-                                        /*
-                                            {
-                                                "body": {
-                                                    "SimulatorInfo": [
-                                                        {
-                                                            "Handle": "AALoAAAECwA=",
-                                                            "IP": "2FIqRA==",
-                                                            "Port": 13029
-                                                        }
-                                                    ]
-                                                },
-                                                "message": "EnableSimulator"
-                                            }
-                                        */
-
+                                    {
+                                        const enableSimulatorEvent = new EnableSimulatorMessage();
+                                        const simulatorInfo = event.body.SimulatorInfo[0];
+                                        const regionHandleBuf = Buffer.from(simulatorInfo['Handle'].toArray());
+                                        enableSimulatorEvent.SimulatorInfo.Handle = new Long(regionHandleBuf.readUInt32LE(0), regionHandleBuf.readUInt32LE(4), true);
+                                        enableSimulatorEvent.SimulatorInfo.IP = new IPAddress(Buffer.from(simulatorInfo['IP'].toArray()), 0);
+                                        enableSimulatorEvent.SimulatorInfo.Port = simulatorInfo['Port'];
+                                        this.clientEvents.onEnableSimulatorEvent.next(enableSimulatorEvent);
                                         break;
+                                    }
                                     case 'BulkUpdateInventory':
                                     {
                                         const body = event['body'];
@@ -624,7 +618,7 @@ export class EventQueueClient
                     }
                     catch (error)
                     {
-                       reject(error);
+                        reject(error);
                     }
                 }).catch((err) =>
                 {
