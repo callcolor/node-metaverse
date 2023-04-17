@@ -99,9 +99,11 @@ export class EventQueueClient
                                         const enableSimulatorEvent = new EnableSimulatorMessage();
                                         const simulatorInfo = event.body.SimulatorInfo[0];
                                         const regionHandleBuf = Buffer.from(simulatorInfo['Handle'].toArray());
-                                        enableSimulatorEvent.SimulatorInfo.Handle = new Long(regionHandleBuf.readUInt32LE(0), regionHandleBuf.readUInt32LE(4), true);
-                                        enableSimulatorEvent.SimulatorInfo.IP = new IPAddress(Buffer.from(simulatorInfo['IP'].toArray()), 0);
-                                        enableSimulatorEvent.SimulatorInfo.Port = simulatorInfo['Port'];
+                                        enableSimulatorEvent.SimulatorInfo = {
+                                            Handle: new Long(regionHandleBuf.readUInt32LE(0), regionHandleBuf.readUInt32LE(4), true),
+                                            IP: new IPAddress(Buffer.from(simulatorInfo['IP'].toArray()), 0),
+                                            Port: simulatorInfo['Port'],
+                                        }
                                         this.clientEvents.onEnableSimulatorEvent.next(enableSimulatorEvent);
                                         break;
                                     }
