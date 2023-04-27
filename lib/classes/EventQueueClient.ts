@@ -501,6 +501,18 @@ export class EventQueueClient
                                         this.clientEvents.onLandStatReplyEvent.next(evt);
                                         break;
                                     }
+                                    case 'EstablishAgentCommunication':
+                                    {
+                                        // {
+                                        //     "body": {
+                                        //         "agent-id": string,
+                                        //         "seed-capability": string,
+                                        //         "sim-ip-and-port": string
+                                        //     },
+                                        //     "message": "EstablishAgentCommunication"
+                                        // }
+                                        break;
+                                    }
                                     default:
                                         console.log('Unhandled event:');
                                         console.log(JSON.stringify(event, null, 4));
