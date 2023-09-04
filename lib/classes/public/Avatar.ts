@@ -122,6 +122,16 @@ export class Avatar extends AvatarQueryResult
         }
     }
 
+    get coarsePosition(): Vector3
+    {
+        const pos: Vector3 = new Vector3(this._coarsePosition);
+        if (pos.z === 1020 && this._position.z > 1020)
+        {
+            pos.z = this._position.z;
+        }
+        return pos;
+    }
+
     set coarsePosition(pos: Vector3)
     {
         const oldPos = this._coarsePosition;
@@ -152,7 +162,7 @@ export class Avatar extends AvatarQueryResult
         }
         if (obj.NameValue['Title'] !== undefined)
         {
-           this.setTitle(obj.NameValue['Title'].value);
+            this.setTitle(obj.NameValue['Title'].value);
         }
         this.isVisible = true;
     }
