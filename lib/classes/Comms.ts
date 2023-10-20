@@ -133,6 +133,8 @@ export class Comms
                             imEvent.fromName = Utils.BufferToStringSimple(im.MessageBlock.FromAgentName);
                             imEvent.message = Utils.BufferToStringSimple(im.MessageBlock.Message);
                             imEvent.flags = InstantMessageEventFlags.normal;
+                            imEvent.regionId = im.MessageBlock.RegionID
+                            imEvent.position = im.MessageBlock.Position;
                             this.clientEvents.onInstantMessage.next(imEvent);
                             break;
                         }
