@@ -12,5 +12,6 @@ export class InstantMessageEvent
     message: string;
     regionId: UUID;
     position: Vector3;
+    binaryBucket: string;
     flags: InstantMessageEventFlags;
 }

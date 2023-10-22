@@ -135,6 +135,7 @@ export class Comms
                             imEvent.flags = InstantMessageEventFlags.normal;
                             imEvent.regionId = im.MessageBlock.RegionID
                             imEvent.position = im.MessageBlock.Position;
+                            imEvent.binaryBucket = Utils.BufferToStringSimple(im.MessageBlock.BinaryBucket);
                             this.clientEvents.onInstantMessage.next(imEvent);
                             break;
                         }
