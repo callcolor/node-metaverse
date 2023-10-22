@@ -285,6 +285,14 @@ export class InventoryItem
                 {
                     item.created = new Date(parseInt(result.value, 10) * 1000);
                 }
+                else if (result.key === 'metadata')
+                {
+                    // <llsd><map /></llsd>
+                }
+                else if (result.key === '|')
+                {
+                    // ''
+                }
                 else
                 {
                     console.log('Unrecognised key (2): ' + result.key);
