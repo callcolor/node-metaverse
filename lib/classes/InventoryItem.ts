@@ -1015,7 +1015,7 @@ export class InventoryItem
         return this.agent.currentRegion.circuit.waitForAck(this.agent.currentRegion.circuit.sendMessage(msg, PacketFlags.Reliable), 10000);
     }
 
-    async updateScript(scriptAsset: Buffer): Promise<UUID>
+    async updateScript(scriptAsset: Buffer, experienceUUID?: UUID): Promise<UUID>
     {
         if (this.agent === undefined)
         {
@@ -1029,7 +1029,8 @@ export class InventoryItem
                     'item_id': new LLSD.UUID(this.itemID.toString()),
                     'task_id': new LLSD.UUID(this.container.FullID.toString()),
                     'is_script_running': true,
-                    'target': 'mono'
+                    'target': 'mono',
+                    'experience': experienceUUID,
                 });
                 if (result['uploader'])
                 {
