@@ -140,6 +140,17 @@ export class Packet
             pos++;
         }
 
+        const knownMessageType = (<any>MessageClass)[MessageClass.nameFromID(messageID)];
+        if (!knownMessageType)
+        {
+            const message = new MessageClass.UnknownMessageMessage();
+            message.UnknownBlock = {
+                UnknownContent: buf.slice(pos, buf.length)
+            }
+            this.message = message;
+            return buf.length;
+        }
+
         this.message = new (<any>MessageClass)[nameFromID(messageID)]() as MessageBase;
 
         pos += this.message.readFromBuffer(buf, pos);
