@@ -1,5 +1,6 @@
 export enum Message
 {
+    UnknownMessage = 0,
     TestMessage = 4294901761,
     PacketAck = 4294967291,
     OpenCircuit = 4294967292,

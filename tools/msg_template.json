@@ -1,5 +1,25 @@
 [
     {
+        "name": "UnknownMessage",
+        "frequency": "High",
+        "id": "0",
+        "flags": [],
+        "blocks": [
+            {
+                "name": "UnknownBlock",
+                "type": "Single",
+                "count": 1,
+                "params": [
+                    {
+                        "name": "UnknownContent",
+                        "type": "Variable",
+                        "size": "2"
+                    }
+                ]
+            }
+        ]
+    },
+    {
         "name": "TestMessage",
         "frequency": "Low",
         "id": "1",
