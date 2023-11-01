@@ -20999,6 +20999,41 @@
         ]
     },
     {
+        "name": "GenericStreamingMessage",
+        "frequency": "High",
+        "id": "31",
+        "flags": [
+            "Trusted",
+            "Unencoded"
+        ],
+        "blocks": [
+            {
+                "name": "MethodData",
+                "type": "Single",
+                "count": 1,
+                "params": [
+                    {
+                        "name": "Method",
+                        "type": "U16",
+                        "size": 1
+                    }
+                ]
+            },
+            {
+                "name": "DataBlock",
+                "type": "Single",
+                "count": 1,
+                "params": [
+                    {
+                        "name": "Data",
+                        "type": "Variable",
+                        "size": 2
+                    }
+                ]
+            }
+        ]
+    },
+    {
         "name": "AssetUploadRequest",
         "frequency": "Low",
         "id": "333",
