@@ -80,6 +80,7 @@ export class Comms
                             ioEvent.message = inventoryMessage;
                             ioEvent.requestID = im.MessageBlock.ID;
                             ioEvent.source = ChatSourceType.Agent;
+                            ioEvent.type = im.MessageBlock.BinaryBucket.readUInt8(0);
                             this.clientEvents.onInventoryOffered.next(ioEvent);
                             break;
                         }
