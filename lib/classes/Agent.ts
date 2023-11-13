@@ -323,10 +323,11 @@ export class Agent
                         a === BuiltInAnimations.WALK ||
                         a === BuiltInAnimations.RUN)
                     {
-                        // TODO: Pretty sure this isn't the best way to do this
+                        // TODO: Pretty sure this still isn't the best way to do this
+                        const oldFlags = this.controlFlags;
                         this.controlFlags = ControlFlags.AGENT_CONTROL_FINISH_ANIM;
                         this.sendAgentUpdate();
-                        this.controlFlags = 0;
+                        this.controlFlags = oldFlags;
                     }
                 }
             }
