@@ -227,7 +227,7 @@ export class Agent
     }
     circuitActive(): void
     {
-        this.agentUpdateTimer = setInterval(this.sendAgentUpdate.bind(this), 1000);
+        this.agentUpdateTimer = setInterval(this.sendAgentUpdate.bind(this), 100);
     }
     sendAgentUpdate(): void
     {
