@@ -1,6 +1,6 @@
 import { ClientEvents } from './ClientEvents';
 import { Agent } from './Agent';
-import { Caps } from './Caps';
+import { CapabilitiesEnum, Caps } from './Caps';
 import { EventQueueStateChangeEvent } from '../events/EventQueueStateChangeEvent';
 import { ParcelPropertiesEvent } from '../events/ParcelPropertiesEvent';
 import { Vector3 } from './Vector3';
@@ -613,7 +613,7 @@ export class EventQueueClient
         }
     }
 
-    capsPostXML(capability: string, data: any, attempt: number = 0): Promise<any>
+    capsPostXML(capability: CapabilitiesEnum, data: any, attempt: number = 0): Promise<any>
     {
         return new Promise<any>((resolve, reject) =>
         {

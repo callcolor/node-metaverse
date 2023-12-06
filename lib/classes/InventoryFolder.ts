@@ -25,6 +25,7 @@ import { UpdateCreateInventoryItemMessage } from './messages/UpdateCreateInvento
 import { LLMesh } from './public/LLMesh';
 import { Utils } from './Utils';
 import { UUID } from './UUID';
+import { CapabilitiesEnum } from './Caps';
 
 export class InventoryFolder
 {
@@ -136,7 +137,7 @@ export class InventoryFolder
             ]
         };
 
-        let cmd = 'FetchInventoryDescendents2';
+        let cmd: CapabilitiesEnum = 'FetchInventoryDescendents2';
         if (this.library === InventoryLibrary.Library)
         {
             cmd = 'FetchLibDescendents2';
@@ -300,7 +301,7 @@ export class InventoryFolder
                 ]
             };
 
-            let cmd = 'FetchInventoryDescendents2';
+            let cmd: CapabilitiesEnum = 'FetchInventoryDescendents2';
             if (this.library === InventoryLibrary.Library)
             {
                 cmd = 'FetchLibDescendents2';

@@ -30,7 +30,7 @@ export class LLSDNotationParser
             { regex: /^d"([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{2}Z)"/, type: LLSDTokenType.DATE },
             { regex: /^b[0-9]{2}"[0-9a-zA-Z+\/=]*?"/, type: LLSDTokenType.BINARY_STATIC },
             { regex: /^b\(([0-9]+)\)"/, type: LLSDTokenType.BINARY_DYNAMIC_START }
-    ];
+        ];
 
     private static* tokenize(inpt: string): Generator<LLSDToken | void>
     {

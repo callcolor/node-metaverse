@@ -8413,9 +8413,14 @@
             },
             {
                 "name": "RegionInfo5",
-                "type": "Variable",
+                "type": "Single",
                 "count": 1,
                 "params": [
+                    {
+                        "name": "HasRegionInfo5",
+                        "type": "U8",
+                        "size": 1
+                    },
                     {
                         "name": "ChatWhisperRange",
                         "type": "F32",
@@ -15945,6 +15950,18 @@
                         "name": "BinaryBucket",
                         "type": "Variable",
                         "size": "2"
+                    }
+                ]
+            },
+            {
+                "name": "EstateBlock",
+                "type": "Single",
+                "count": 1,
+                "params": [
+                    {
+                        "name": "EstateID",
+                        "type": "U32",
+                        "size": 1
                     }
                 ]
             }

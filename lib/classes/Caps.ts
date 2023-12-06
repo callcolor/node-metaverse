@@ -11,6 +11,122 @@ import * as LLSD from '@caspertech/llsd';
 import * as url from 'url';
 import got from 'got';
 
+export const Capabilities = [
+    'AbuseCategories',
+    'AcceptFriendship',
+    'AcceptGroupInvite',
+    'AgentPreferences',
+    'AgentProfile',
+    'AgentState',
+    'AttachmentResources',
+    'AvatarPickerSearch',
+    'AvatarRenderInfo',
+    'CharacterProperties',
+    'ChatSessionRequest',
+    'CopyInventoryFromNotecard',
+    'CreateInventoryCategory',
+    'DeclineFriendship',
+    'DeclineGroupInvite',
+    'DispatchRegionInfo',
+    'DirectDelivery',
+    'EnvironmentSettings',
+    'EstateAccess',
+    'EstateChangeInfo',
+    'EventQueueGet',
+    'ExtEnvironment',
+    'FetchLib2',
+    'FetchLibDescendents2',
+    'FetchInventory2',
+    'FetchInventoryDescendents2',
+    'IncrementCOFVersion',
+    'InterestList',
+    'InventoryThumbnailUpload',
+    'GetDisplayNames',
+    'GetExperiences',
+    'AgentExperiences',
+    'FindExperienceByName',
+    'GetExperienceInfo',
+    'GetAdminExperiences',
+    'GetCreatorExperiences',
+    'ExperiencePreferences',
+    'GroupExperiences',
+    'UpdateExperience',
+    'IsExperienceAdmin',
+    'IsExperienceContributor',
+    'InventoryAPIv3',
+    'RegionExperiences',
+    'ExperienceQuery',
+    'GetMesh',
+    'GetMesh2',
+    'GetMetadata',
+    'GetObjectCost',
+    'GetObjectPhysicsData',
+    'GetTexture',
+    'GroupAPIv1',
+    'GroupMemberData',
+    'GroupProposalBallot',
+    'HomeLocation',
+    'LandResources',
+    'LSLSyntax',
+    'MapLayer',
+    'MapLayerGod',
+    'MeshUploadFlag',
+    'ModifyMaterialParams',
+    'NavMeshGenerationStatus',
+    'NewFileAgentInventory',
+    'ObjectAnimation',
+    'ObjectMedia',
+    'ObjectMediaNavigate',
+    'ObjectNavMeshProperties',
+    'ParcelPropertiesUpdate',
+    'ParcelVoiceInfoRequest',
+    'ProductInfoRequest',
+    'ProvisionVoiceAccountRequest',
+    'ReadOfflineMsgs',
+    'RegionObjects',
+    'RemoteParcelRequest',
+    'RenderMaterials',
+    'RequestTextureDownload',
+    'ResourceCostSelected',
+    'RetrieveNavMeshSrc',
+    'SearchStatRequest',
+    'SearchStatTracking',
+    'SendPostcard',
+    'SendUserReport',
+    'SendUserReportWithScreenshot',
+    'ServerReleaseNotes',
+    'SetDisplayName',
+    'SimConsoleAsync',
+    'SimulatorFeatures',
+    'StartGroupProposal',
+    'TerrainNavMeshProperties',
+    'TextureStats',
+    'UntrustedSimulatorMessage',
+    'UpdateAgentInformation',
+    'UpdateAgentLanguage',
+    'UpdateAvatarAppearance',
+    'UpdateGestureAgentInventory',
+    'UpdateGestureTaskInventory',
+    'UpdateNotecardAgentInventory',
+    'UpdateNotecardTaskInventory',
+    'UpdateScriptAgent',
+    'UpdateScriptTask',
+    'UpdateSettingsAgentInventory',
+    'UpdateSettingsTaskInventory',
+    'UploadAgentProfileImage',
+    'UpdateMaterialAgentInventory',
+    'UpdateMaterialTaskInventory',
+    'UploadBakedTexture',
+    'UserInfo',
+    'ViewerAsset',
+    'ViewerBenefits',
+    'ViewerMetrics',
+    'ViewerStartAuction',
+    'ViewerStats',
+] as const;
+
+export type CapabilitiesEnum = typeof Capabilities[number];
+
 export class Caps
 {
     static CAP_INVOCATION_DELAY_MS: { [key: string]: number } = {
@@ -31,117 +147,7 @@ export class Caps
     {
         this.agent = agent;
         this.clientEvents = clientEvents;
-        const req: string[] = [];
-        req.push('AbuseCategories');
-        req.push('AcceptFriendship');
-        req.push('AcceptGroupInvite');
-        req.push('AgentPreferences');
-        req.push('AgentProfile');
-        req.push('AgentState');
-        req.push('AttachmentResources');
-        req.push('AvatarPickerSearch');
-        req.push('AvatarRenderInfo');
-        req.push('CharacterProperties');
-        req.push('ChatSessionRequest');
-        req.push('CopyInventoryFromNotecard');
-        req.push('CreateInventoryCategory');
-        req.push('DeclineFriendship');
-        req.push('DeclineGroupInvite');
-        req.push('DispatchRegionInfo');
-        req.push('DirectDelivery');
-        req.push('EnvironmentSettings');
-        req.push('EstateAccess');
-        req.push('EstateChangeInfo');
-        req.push('EventQueueGet');
-        req.push('ExtEnvironment');
-        req.push('FetchLib2');
-        req.push('FetchLibDescendents2');
-        req.push('FetchInventory2');
-        req.push('FetchInventoryDescendents2');
-        req.push('IncrementCOFVersion');
-        req.push('InterestList');
-        req.push('InventoryThumbnailUpload');
-        req.push('GetDisplayNames');
-        req.push('GetExperiences');
-        req.push('AgentExperiences');
-        req.push('FindExperienceByName');
-        req.push('GetExperienceInfo');
-        req.push('GetAdminExperiences');
-        req.push('GetCreatorExperiences');
-        req.push('ExperiencePreferences');
-        req.push('GroupExperiences');
-        req.push('UpdateExperience');
-        req.push('IsExperienceAdmin');
-        req.push('IsExperienceContributor');
-        req.push('RegionExperiences');
-        req.push('ExperienceQuery');
-        req.push('GetMesh');
-        req.push('GetMesh2');
-        req.push('GetMetadata');
-        req.push('GetObjectCost');
-        req.push('GetObjectPhysicsData');
-        req.push('GetTexture');
-        req.push('GroupAPIv1');
-        req.push('GroupMemberData');
-        req.push('GroupProposalBallot');
-        req.push('HomeLocation');
-        req.push('LandResources');
-        req.push('LSLSyntax');
-        req.push('MapLayer');
-        req.push('MapLayerGod');
-        req.push('MeshUploadFlag');
-        req.push('ModifyMaterialParams');
-        req.push('NavMeshGenerationStatus');
-        req.push('NewFileAgentInventory');
-        req.push('ObjectAnimation');
-        req.push('ObjectMedia');
-        req.push('ObjectMediaNavigate');
-        req.push('ObjectNavMeshProperties');
-        req.push('ParcelPropertiesUpdate');
-        req.push('ParcelVoiceInfoRequest');
-        req.push('ProductInfoRequest');
-        req.push('ProvisionVoiceAccountRequest');
-        req.push('ReadOfflineMsgs');
-        req.push('RegionObjects');
-        req.push('RemoteParcelRequest');
-        req.push('RenderMaterials');
-        req.push('RequestTextureDownload');
-        req.push('ResourceCostSelected');
-        req.push('RetrieveNavMeshSrc');
-        req.push('SearchStatRequest');
-        req.push('SearchStatTracking');
-        req.push('SendPostcard');
-        req.push('SendUserReport');
-        req.push('SendUserReportWithScreenshot');
-        req.push('ServerReleaseNotes');
-        req.push('SetDisplayName');
-        req.push('SimConsoleAsync');
-        req.push('SimulatorFeatures');
-        req.push('StartGroupProposal');
-        req.push('TerrainNavMeshProperties');
-        req.push('TextureStats');
-        req.push('UntrustedSimulatorMessage');
-        req.push('UpdateAgentInformation');
-        req.push('UpdateAgentLanguage');
-        req.push('UpdateAvatarAppearance');
-        req.push('UpdateGestureAgentInventory');
-        req.push('UpdateGestureTaskInventory');
-        req.push('UpdateNotecardAgentInventory');
-        req.push('UpdateNotecardTaskInventory');
-        req.push('UpdateScriptAgent');
-        req.push('UpdateScriptTask');
-        req.push('UpdateSettingsAgentInventory');
-        req.push('UpdateSettingsTaskInventory');
-        req.push('UploadAgentProfileImage');
-        req.push('UpdateMaterialAgentInventory');
-        req.push('UpdateMaterialTaskInventory');
-        req.push('UploadBakedTexture');
-        req.push('UserInfo');
-        req.push('ViewerAsset');
-        req.push('ViewerBenefits');
-        req.push('ViewerMetrics');
-        req.push('ViewerStartAuction');
-        req.push('ViewerStats');
+        const req = Capabilities;
 
         this.active = true;
         this.requestPost(seedURL, LLSD.LLSD.formatXML(req), 'application/llsd+xml').then((resp: ICapResponse) =>
@@ -189,7 +195,7 @@ export class Caps
         return response.body;
     }
 
-    public async requestPost(capURL: string, data: string | Buffer, contentType: string)
+    public async requestPost(capURL: string, data: string | Buffer, contentType: string): Promise<{ status: number; body: string }>
     {
         const response = await got.post(capURL, {
             headers: {
@@ -268,7 +274,7 @@ export class Caps
         return (this.capabilities[capability] !== undefined);
     }
 
-    getCapability(capability: string): Promise<string>
+    getCapability(capability: CapabilitiesEnum): Promise<string>
     {
         return new Promise<string>((resolve, reject) =>
         {
@@ -469,9 +475,9 @@ export class Caps
         });
     }
 
-    async capsGetXML(capability: string | [string, { [key: string]: string }]): Promise<any>
+    async capsGetXML(capability: CapabilitiesEnum | [CapabilitiesEnum, { [key: string]: string }]): Promise<any>
     {
-        let capName = '';
+        let capName;
         let queryParams: { [key: string]: string } = {};
         if (typeof capability === 'string')
         {
@@ -507,9 +513,9 @@ export class Caps
         }
     }
 
-    async capsPostXML(capability: string | [string, { [key: string]: string }], data: any): Promise<any>
+    async capsPostXML(capability: CapabilitiesEnum | [CapabilitiesEnum, { [key: string]: string }], data: any): Promise<any>
     {
-        let capName = '';
+        let capName;
         let queryParams: { [key: string]: string } = {};
         if (typeof capability === 'string')
         {
@@ -545,9 +551,9 @@ export class Caps
         }
     }
 
-    async capsPutXML(capability: string | [string, { [key: string]: string }], data: any): Promise<any>
+    async capsPutXML(capability: CapabilitiesEnum | [CapabilitiesEnum, { [key: string]: string }], data: any): Promise<any>
     {
-        let capName = '';
+        let capName;
         let queryParams: { [key: string]: string } = {};
         if (typeof capability === 'string')
         {
