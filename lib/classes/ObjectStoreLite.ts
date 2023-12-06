@@ -740,7 +740,7 @@ export class ObjectStoreLite implements IObjectStore
                             invItemID = new UUID(obj.NameValue['AttachItemID'].value);
                         }
 
-                        this.agent.currentRegion.clientCommands.region.resolveObject(obj, {}).then(() =>
+                        this.agent.currentRegion?.clientCommands.region.resolveObject(obj, {}).then(() =>
                         {
                             try
                             {
@@ -758,9 +758,9 @@ export class ObjectStoreLite implements IObjectStore
                             {
                                 console.error(err);
                             }
-                        }).catch(() =>
+                        }).catch((e) =>
                         {
-                            console.error('Failed to resolve new avatar attachment');
+                            console.error('Failed to resolve new avatar attachment:', e.message);
                         });
 
                     }

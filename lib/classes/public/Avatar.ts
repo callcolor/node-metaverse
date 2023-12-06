@@ -69,9 +69,9 @@ export class Avatar extends AvatarQueryResult
                 this._gameObject.region.clientCommands.region.resolveObject(attachment, {}).then(() =>
                 {
                     this.addAttachment(attachment);
-                }).catch(() =>
+                }).catch((e) =>
                 {
-                    console.error('Failed to resolve attachment for avatar');
+                    console.error('Failed to resolve attachment for avatar:', e.message);
                 });
             }
         }
