@@ -59,7 +59,7 @@ function getBlocks(str)
             count--;
             if (count === 0)
             {
-                let s = str.substr(startPos+1, (i - startPos)-1);
+                let s = str.substring(startPos + 1, i);
                 block.push(s);
                 started = false;
             }
@@ -68,7 +68,7 @@ function getBlocks(str)
     return block;
 }
 
-fs.readFile('./msg_template.msg', (err, data) =>
+fs.readFile('./message_template.msg', (err, data) =>
 {
     if (err)
     {
@@ -86,7 +86,7 @@ fs.readFile('./msg_template.msg', (err, data) =>
             const pos = line.indexOf('//');
             if (pos !== -1)
             {
-                line = line.substr(0, pos-1);
+                line = line.substring(0, pos-1);
             }
             newLines.push(line);
         }

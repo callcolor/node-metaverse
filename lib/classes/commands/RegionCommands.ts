@@ -23,7 +23,6 @@ import { ObjectPropertiesMessage } from '../messages/ObjectProperties';
 import { ObjectSelectMessage } from '../messages/ObjectSelect';
 import { RegionHandleRequestMessage } from '../messages/RegionHandleRequest';
 import { RegionIDAndHandleReplyMessage } from '../messages/RegionIDAndHandleReply';
-import { ObjectResolver } from '../ObjectResolver';
 import { Avatar } from '../public/Avatar';
 import { GameObject } from '../public/GameObject';
 import { Parcel } from '../public/Parcel';
@@ -35,6 +34,13 @@ import { CommandsBase } from './CommandsBase';
 import Timeout = NodeJS.Timeout;
 
 import Timer = NodeJS.Timer;
+
+export interface GetObjectsOptions
+{
+    resolve?: boolean;
+    includeTempObjects?: boolean;
+    includeAvatars?: boolean;
+}
 
 export class RegionCommands extends CommandsBase
 {
@@ -178,7 +184,7 @@ export class RegionCommands extends CommandsBase
                 const selectList: GameObject[] = [];
                 for (let y = 0; y < selectLimit; y++)
                 {
-                    if (y < objects.length)
+                    if (x + y < objects.length)
                     {
                         selectList.push(objects[x + y]);
                     }
@@ -196,8 +202,14 @@ export class RegionCommands extends CommandsBase
             };
             deselectObject.ObjectData = [];
             const uuidMap: { [key: string]: GameObject } = {};
+            let skipped = 0;
             for (const obj of objects)
             {
+                if (!(obj instanceof GameObject))
+                {
+                    skipped++;
+                    continue;
+                }
                 const uuidStr = obj.FullID.toString();
                 if (!uuidMap[uuidStr])
                 {
@@ -207,8 +219,10 @@ export class RegionCommands extends CommandsBase
                     });
                 }
             }
-
-            // Create a map of our expected UUIDs
+            if (skipped > 0)
+            {
+                console.log('Skipped ' + String(skipped) + ' bad objects during deselection');
+            }
 
             const sequenceID = this.circuit.sendMessage(deselectObject, PacketFlags.Reliable);
             return this.circuit.waitForAck(sequenceID, 10000);
@@ -262,7 +276,7 @@ export class RegionCommands extends CommandsBase
                 const selectList: GameObject[] = [];
                 for (let y = 0; y < selectLimit; y++)
                 {
-                    if (y < objects.length)
+                    if (x + y < objects.length)
                     {
                         selectList.push(objects[x + y]);
                     }
@@ -280,8 +294,14 @@ export class RegionCommands extends CommandsBase
             };
             selectObject.ObjectData = [];
             const uuidMap: { [key: string]: GameObject } = {};
+            let skipped = 0;
             for (const obj of objects)
             {
+                if (!(obj instanceof GameObject))
+                {
+                    skipped++;
+                    continue;
+                }
                 const uuidStr = obj.FullID.toString();
                 if (!uuidMap[uuidStr])
                 {
@@ -290,6 +310,10 @@ export class RegionCommands extends CommandsBase
                         ObjectLocalID: obj.ID
                     });
                 }
+            }
+            if (skipped > 0)
+            {
+                console.log('Skipped ' + String(skipped) + ' bad objects during deselection');
             }
 
             // Create a map of our expected UUIDs
@@ -324,6 +348,7 @@ export class RegionCommands extends CommandsBase
                             obj.folderID = objData.FolderID;
                             obj.fromTaskID = objData.FromTaskID;
                             obj.groupID = objData.GroupID;
+                            obj.OwnerID = objData.OwnerID;
                             obj.lastOwnerID = objData.LastOwnerID;
                             obj.name = Utils.BufferToStringSimple(objData.Name);
                             obj.description = Utils.BufferToStringSimple(objData.Description);
@@ -358,10 +383,14 @@ export class RegionCommands extends CommandsBase
 
                 for (const obj of objects)
                 {
-                   if (obj.resolvedAt === undefined || obj.name === undefined)
-                   {
-                       obj.resolveAttempts++;
-                   }
+                    if (!(obj instanceof GameObject))
+                    {
+                        continue;
+                    }
+                    if (obj.resolvedAt === undefined || obj.name === undefined)
+                    {
+                        obj.resolveAttempts++;
+                    }
                 }
             }
         }
@@ -372,15 +401,36 @@ export class RegionCommands extends CommandsBase
         return this.currentRegion.regionName;
     }
 
-    async resolveObject(object: GameObject, forceResolve = false, skipInventory = false): Promise<GameObject[]>
+    async resolveObject(object: GameObject, options: GetObjectsOptions): Promise<GameObject[]>
     {
-        return this.currentRegion.resolver.resolveObjects([object], forceResolve, skipInventory);
+        return this.currentRegion.resolver.resolveObjects([object], options);
     }
 
-    async resolveObjects(objects: GameObject[], forceResolve = false, skipInventory = false, log = false): Promise<GameObject[]>
+    async resolveObjects(objects: GameObject[], options: GetObjectsOptions): Promise<GameObject[]>
     {
-        return this.currentRegion.resolver.resolveObjects(objects, forceResolve, skipInventory, log);
+        return this.currentRegion.resolver.resolveObjects(objects, options);
     }
+
+    public async fetchObjectInventory(object: GameObject): Promise<void>
+    {
+        return this.currentRegion.resolver.getInventory(object);
+    }
+
+    public async fetchObjectInventories(objects: GameObject[]): Promise<void>
+    {
+        return this.currentRegion.resolver.getInventories(objects);
+    }
+
+    public async fetchObjectCost(object: GameObject): Promise<void>
+    {
+        return this.currentRegion.resolver.getCosts([object]);
+    }
+
+    public async fetchObjectCosts(objects: GameObject[]): Promise<void>
+    {
+        return this.currentRegion.resolver.getCosts(objects);
+    }
+
 
     private waitForObjectByLocalID(localID: number, timeout: number): Promise<GameObject>
     {
@@ -819,6 +869,15 @@ export class RegionCommands extends CommandsBase
                             if (item !== null)
                             {
                                 await object.dropInventoryIntoContents(item);
+                                await object.updateInventory();
+                                for (const taskItem of object.inventory)
+                                {
+                                    if (taskItem.name === item.name)
+                                    {
+                                        taskItem.permissions = invItem.permissions;
+                                        await taskItem.renameInTask(object, invItem.name);
+                                    }
+                                }
                             }
                         }
                         break;
@@ -831,6 +890,15 @@ export class RegionCommands extends CommandsBase
                             if (item !== null)
                             {
                                 await object.dropInventoryIntoContents(item);
+                                await object.updateInventory();
+                                for (const taskItem of object.inventory)
+                                {
+                                    if (taskItem.name === item.name)
+                                    {
+                                        taskItem.permissions = invItem.permissions;
+                                        await taskItem.renameInTask(object, invItem.name);
+                                    }
+                                }
                             }
                         }
                         break;
@@ -844,6 +912,15 @@ export class RegionCommands extends CommandsBase
                             if (item !== null)
                             {
                                 await object.dropInventoryIntoContents(item);
+                                await object.updateInventory();
+                                for (const taskItem of object.inventory)
+                                {
+                                    if (taskItem.name === item.name)
+                                    {
+                                        taskItem.permissions = invItem.permissions;
+                                        await taskItem.renameInTask(object, invItem.name);
+                                    }
+                                }
                             }
                         }
                         break;
@@ -856,6 +933,15 @@ export class RegionCommands extends CommandsBase
                             if (item !== null)
                             {
                                 await object.dropInventoryIntoContents(item);
+                                await object.updateInventory();
+                                for (const taskItem of object.inventory)
+                                {
+                                    if (taskItem.name === item.name)
+                                    {
+                                        taskItem.permissions = invItem.permissions;
+                                        await taskItem.renameInTask(object, invItem.name);
+                                    }
+                                }
                             }
                         }
                         break;
@@ -868,6 +954,15 @@ export class RegionCommands extends CommandsBase
                             if (item !== null)
                             {
                                 await object.dropInventoryIntoContents(item);
+                                await object.updateInventory();
+                                for (const taskItem of object.inventory)
+                                {
+                                    if (taskItem.name === item.name)
+                                    {
+                                        taskItem.permissions = invItem.permissions;
+                                        await taskItem.renameInTask(object, invItem.name);
+                                    }
+                                }
                             }
                         }
                         break;
@@ -880,6 +975,15 @@ export class RegionCommands extends CommandsBase
                             if (item !== null)
                             {
                                 await object.dropInventoryIntoContents(item);
+                                await object.updateInventory();
+                                for (const taskItem of object.inventory)
+                                {
+                                    if (taskItem.name === item.name)
+                                    {
+                                        taskItem.permissions = invItem.permissions;
+                                        await taskItem.renameInTask(object, invItem.name);
+                                    }
+                                }
                             }
                         }
                         break;
@@ -893,6 +997,15 @@ export class RegionCommands extends CommandsBase
                             if (item !== null)
                             {
                                 await object.dropInventoryIntoContents(item);
+                                await object.updateInventory();
+                                for (const taskItem of object.inventory)
+                                {
+                                    if (taskItem.name === item.name)
+                                    {
+                                        taskItem.permissions = invItem.permissions;
+                                        await taskItem.renameInTask(object, invItem.name);
+                                    }
+                                }
                             }
                         }
                         break;
@@ -905,6 +1018,15 @@ export class RegionCommands extends CommandsBase
                             if (item !== null)
                             {
                                 await object.dropInventoryIntoContents(item);
+                                await object.updateInventory();
+                                for (const taskItem of object.inventory)
+                                {
+                                    if (taskItem.name === item.name)
+                                    {
+                                        taskItem.permissions = invItem.permissions;
+                                        await taskItem.renameInTask(object, invItem.name);
+                                    }
+                                }
                             }
                         }
                         break;
@@ -917,6 +1039,15 @@ export class RegionCommands extends CommandsBase
                             if (inventoryItem !== null)
                             {
                                 await object.dropInventoryIntoContents(inventoryItem);
+                                await object.updateInventory();
+                                for (const taskItem of object.inventory)
+                                {
+                                    if (taskItem.name === inventoryItem.name)
+                                    {
+                                        taskItem.permissions = invItem.permissions;
+                                        await taskItem.renameInTask(object, invItem.name);
+                                    }
+                                }
                             }
                             else
                             {
@@ -934,6 +1065,15 @@ export class RegionCommands extends CommandsBase
                             if (texItem.item !== null)
                             {
                                 await object.dropInventoryIntoContents(texItem.item);
+                                await object.updateInventory();
+                                for (const taskItem of object.inventory)
+                                {
+                                    if (taskItem.name === texItem.item.name)
+                                    {
+                                        taskItem.permissions = invItem.permissions;
+                                        await taskItem.renameInTask(object, invItem.name);
+                                    }
+                                }
                             }
                             else
                             {
@@ -1241,34 +1381,6 @@ export class RegionCommands extends CommandsBase
             buildMap.primReservoir = await this.createPrims(buildMap.primsNeeded, agentPos);
         }
 
-        /*
-        const parts = [];
-        parts.push(this.buildPart(obj, Vector3.getZero(), Quaternion.getIdentity(), buildMap, skipMove));
-
-        if (obj.children)
-        {
-            if (obj.Position === undefined)
-            {
-                obj.Position = Vector3.getZero();
-            }
-            if (obj.Rotation === undefined)
-            {
-                obj.Rotation = Quaternion.getIdentity();
-            }
-            let childNumber = 0;
-            for (const child of obj.children)
-            {
-                if (child.Position !== undefined && child.Rotation !== undefined)
-                {
-                    const objPos = new Vector3(obj.Position);
-                    const objRot = new Quaternion(obj.Rotation);
-                    parts.push(this.buildPart(child, objPos, objRot, buildMap, skipMove));
-                    console.log(' ... Building child ' + String(++childNumber));
-                }
-            }
-        }
-        const results: GameObject[] = await Promise.all(parts);
-         */
         let storedPosition: Vector3 | undefined = undefined;
         if (skipMove)
         {
@@ -1400,7 +1512,7 @@ export class RegionCommands extends CommandsBase
                 if (!evt.object.resolvedAt)
                 {
                     // We need to get the full ObjectProperties so we can be sure this is or isn't a rez from inventory
-                    await this.resolveObject(evt.object, false, true);
+                    await this.resolveObject(evt.object, {});
                 }
                 if (evt.createSelected && !evt.object.claimedForBuild)
                 {
@@ -1513,7 +1625,7 @@ export class RegionCommands extends CommandsBase
         }
         if (resolve)
         {
-            await this.currentRegion.resolver.resolveObjects([obj]);
+            await this.currentRegion.resolver.resolveObjects([obj], {});
         }
         return obj;
     }
@@ -1538,7 +1650,7 @@ export class RegionCommands extends CommandsBase
         }
         if (resolve)
         {
-            await this.currentRegion.resolver.resolveObjects([obj]);
+            await this.currentRegion.resolver.resolveObjects([obj], {});
         }
         return obj;
     }
@@ -1552,7 +1664,7 @@ export class RegionCommands extends CommandsBase
         }
         else
         {
-            objects = await this.getAllObjects(true);
+            objects = await this.getAllObjects({  resolve: true  });
         }
         const idCheck: { [key: string]: boolean } = {};
         const matches: GameObject[] = [];
@@ -1608,13 +1720,12 @@ export class RegionCommands extends CommandsBase
         return this.currentRegion.getParcels();
     }
 
-    async getAllObjects(resolve = false, onlyUnresolved = false, skipInventory = false, outputLog = false): Promise<GameObject[]>
+    async getAllObjects(options: GetObjectsOptions): Promise<GameObject[]>
     {
         const objs = await this.currentRegion.objects.getAllObjects();
-        if (resolve)
+        if (options.resolve)
         {
-            const resolver = new ObjectResolver(this.currentRegion);
-            await resolver.resolveObjects(objs, onlyUnresolved, skipInventory, outputLog);
+            await this.currentRegion.resolver.resolveObjects(objs, options);
         }
         return objs;
     }
@@ -1624,7 +1735,7 @@ export class RegionCommands extends CommandsBase
         const objs = await this.currentRegion.objects.getObjectsInArea(minX, maxX, minY, maxY, minZ, maxZ);
         if (resolve)
         {
-            await this.currentRegion.resolver.resolveObjects(objs);
+            await this.currentRegion.resolver.resolveObjects(objs, {});
         }
         return objs;
     }

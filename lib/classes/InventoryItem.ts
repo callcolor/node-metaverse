@@ -1,6 +1,7 @@
 import * as LLSD from '@caspertech/llsd';
 import { Subscription } from 'rxjs';
 import * as builder from 'xmlbuilder';
+import * as crypto from 'crypto';
 import { GameObject } from '..';
 import { AssetType } from '../enums/AssetType';
 import { AssetTypeLL } from '../enums/AssetTypeLL';
@@ -28,12 +29,15 @@ import { Utils } from './Utils';
 import { UUID } from './UUID';
 import { Vector3 } from './Vector3';
 import Timeout = NodeJS.Timeout;
+import { CopyInventoryItemMessage } from './messages/CopyInventoryItem';
+import { BulkUpdateInventoryEvent } from '../events/BulkUpdateInventoryEvent';
 
 export class InventoryItem
 {
     assetID: UUID = UUID.zero();
     inventoryType: InventoryType;
     name: string;
+    metadata: string;
     salePrice: number;
     saleType: number;
     created: Date;
@@ -70,12 +74,74 @@ export class InventoryItem
         groupOwned: false
     };
 
-    static fromAsset(lineObj: { lines: string[], lineNum: number }, container?: GameObject | InventoryFolder, agent?: Agent): InventoryItem
+    static fromEmbeddedAsset(lineObj: { lines: string[], lineNum: number, pos: number }, container?: GameObject | InventoryFolder, agent?: Agent): InventoryItem
     {
         const item: InventoryItem = new InventoryItem(container, agent);
+        let contMetadata = false;
+        let contName = false;
+        let contDesc = false;
         while (lineObj.lineNum < lineObj.lines.length)
         {
-            const line = lineObj.lines[lineObj.lineNum++];
+            let line = Utils.getNotecardLine(lineObj);
+
+            if (contMetadata)
+            {
+                const idx = line.indexOf('|');
+                if (idx !== -1)
+                {
+                    item.metadata += '\n' + line.substring(0, idx);
+                    line = line.substring(idx + 1);
+                    contMetadata = false;
+                    if (line.length === 0)
+                    {
+                        continue;
+                    }
+                }
+                else
+                {
+                    item.metadata += line;
+                    continue;
+                }
+            }
+            if (contName)
+            {
+                const idx = line.indexOf('|');
+                if (idx !== -1)
+                {
+                    item.name +=  '\n' + line.substring(0, idx);
+                    line = line.substring(idx + 1);
+                    contName = false;
+                    if (line.length === 0)
+                    {
+                        continue;
+                    }
+                }
+                else
+                {
+                    item.name += line;
+                    continue;
+                }
+            }
+            if (contDesc)
+            {
+                const idx = line.indexOf('|');
+                if (idx !== -1)
+                {
+                    item.description +=  '\n' + line.substring(0, idx);
+                    line = line.substring(idx + 1);
+                    contDesc = false;
+                    if (line.length === 0)
+                    {
+                        continue;
+                    }
+                }
+                else
+                {
+                    item.description += line;
+                    continue;
+                }
+            }
+
             let result = Utils.parseLine(line);
             if (result.key !== null)
             {
@@ -99,7 +165,7 @@ export class InventoryItem
                 {
                     while (lineObj.lineNum < lineObj.lines.length)
                     {
-                        result = Utils.parseLine(lineObj.lines[lineObj.lineNum++]);
+                        result = Utils.parseLine(Utils.getNotecardLine(lineObj));
                         if (result.key !== null)
                         {
                             if (result.key === '{')
@@ -166,7 +232,7 @@ export class InventoryItem
                 {
                     while (lineObj.lineNum < lineObj.lines.length)
                     {
-                        result = Utils.parseLine(lineObj.lines[lineObj.lineNum++]);
+                        result = Utils.parseLine(Utils.getNotecardLine(lineObj));
                         if (result.key !== null)
                         {
                             if (result.key === '{')
@@ -265,6 +331,9 @@ export class InventoryItem
                         case 'person':
                             item.inventoryType = InventoryType.Person;
                             break;
+                        case 'material':
+                            item.inventoryType = InventoryType.Material;
+                            break;
                         default:
                             console.error('Unknown inventory type: ' + typeString);
                     }
@@ -275,11 +344,27 @@ export class InventoryItem
                 }
                 else if (result.key === 'name')
                 {
-                    item.name = result.value.substr(0, result.value.indexOf('|'));
+                    if (result.value.indexOf('|') !== -1)
+                    {
+                        item.name = result.value.substring(0, result.value.indexOf('|'));
+                    }
+                    else
+                    {
+                        contName = true;
+                        item.name = result.value;
+                    }
                 }
                 else if (result.key === 'desc')
                 {
-                    item.description = result.value.substr(0, result.value.indexOf('|'));
+                    if (result.value.indexOf('|') !== -1)
+                    {
+                        item.description = result.value.substring(0, result.value.indexOf('|'));
+                    }
+                    else
+                    {
+                        contDesc = true;
+                        item.description = result.value;
+                    }
                 }
                 else if (result.key === 'creation_date')
                 {
@@ -287,11 +372,15 @@ export class InventoryItem
                 }
                 else if (result.key === 'metadata')
                 {
-                    // <llsd><map /></llsd>
-                }
-                else if (result.key === '|')
-                {
-                    // ''
+                    if (result.value.indexOf('|') !== -1)
+                    {
+                        item.metadata = result.value.substring(0, result.value.indexOf('|'));
+                    }
+                    else
+                    {
+                        contMetadata = true;
+                        item.metadata = result.value;
+                    }
                 }
                 else
                 {
@@ -831,7 +920,7 @@ export class InventoryItem
                 if (evt.createSelected && !evt.object.resolvedAt)
                 {
                     // We need to get the full ObjectProperties so we can be sure this is or isn't a rez from inventory
-                    await agent.currentRegion.clientCommands.region.resolveObject(evt.object, false, true);
+                    await agent.currentRegion.clientCommands.region.resolveObject(evt.object, {});
                 }
                 if (evt.createSelected && !evt.object.claimedForBuild)
                 {
@@ -945,7 +1034,7 @@ export class InventoryItem
                 if (evt.createSelected && !evt.object.resolvedAt)
                 {
                     // We need to get the full ObjectProperties so we can be sure this is or isn't a rez from inventory
-                    await agent.currentRegion.clientCommands.region.resolveObject(evt.object, false, true);
+                    await agent.currentRegion.clientCommands.region.resolveObject(evt.object, {});
                 }
                 if (evt.createSelected && !evt.object.claimedForBuild && !claimedPrim)
                 {
@@ -1021,6 +1110,64 @@ export class InventoryItem
             CRC: this.getCRC()
         };
         return this.agent.currentRegion.circuit.waitForAck(this.agent.currentRegion.circuit.sendMessage(msg, PacketFlags.Reliable), 10000);
+    }
+
+    private async waitForCallbackID(callbackID: number): Promise<BulkUpdateInventoryEvent>
+    {
+        if (!this.agent)
+        {
+            throw new Error('No active agent');
+        }
+        return Utils.waitOrTimeOut<BulkUpdateInventoryEvent>(this.agent.currentRegion.clientEvents.onBulkUpdateInventoryEvent, 10000, (event: BulkUpdateInventoryEvent) =>
+        {
+            for (const item of event.itemData)
+            {
+                if (item.callbackID === callbackID)
+                {
+                    return FilterResponse.Finish;
+                }
+            }
+            return FilterResponse.NoMatch;
+        });
+    }
+
+    public async copyTo(target: InventoryFolder, name: string): Promise<InventoryItem>
+    {
+        const msg = new CopyInventoryItemMessage();
+        if (this.agent === undefined)
+        {
+            throw new Error('No active agent');
+        }
+        msg.AgentData = {
+            AgentID: this.agent.agentID,
+            SessionID: this.agent.currentRegion.circuit.sessionID
+        };
+
+        const bytes = crypto.randomBytes(4);
+        const callbackID = bytes.readUInt32LE(0);
+        msg.InventoryData = [{
+            CallbackID: callbackID,
+            OldAgentID: this.agent.agentID,
+            OldItemID: this.itemID,
+            NewFolderID: target.folderID,
+            NewName: Utils.StringToBuffer(name)
+        }];
+        this.agent.currentRegion.circuit.sendMessage(msg, PacketFlags.Reliable);
+        const cbMsg = await this.waitForCallbackID(callbackID);
+
+        for (const cbItem of cbMsg.itemData)
+        {
+            if (cbItem.callbackID === callbackID)
+            {
+                const item = await this.agent.inventory.fetchInventoryItem(cbItem.itemID);
+                if (item !== null)
+                {
+                    return item;
+                }
+            }
+        }
+
+        throw new Error('Unable to locate inventory item after copy');
     }
 
     async updateScript(scriptAsset: Buffer, experienceUUID?: UUID | string): Promise<UUID>

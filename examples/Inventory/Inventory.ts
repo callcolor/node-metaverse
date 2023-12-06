@@ -8,6 +8,7 @@ import { InventoryType } from '../../lib/enums/InventoryType';
 import { PermissionMask } from '../../lib/enums/PermissionMask';
 import { InventoryResponseEvent } from '../../lib/events/InventoryResponseEvent';
 import { InventoryOfferedEvent } from '../../lib/events/InventoryOfferedEvent';
+import { UUID } from '../../lib';
 
 class Inventory extends ExampleBot
 {
@@ -63,9 +64,27 @@ class Inventory extends ExampleBot
         }
 
         // Set notecard to transfer only
-
         exampleNotecard.permissions.nextOwnerMask = PermissionMask.Transfer | PermissionMask.Modify;
         await exampleNotecard.update();
+
+        // Make a copy of the notecard
+        const copy = await exampleNotecard.copyTo(exampleFolder, exampleNotecard.name + ' - The comeback ' + UUID.random().toString().substring(0, 8));
+
+        // Delete the copy
+        await copy.delete();
+
+        // Let's set some perms
+        const copyOnly = await exampleNotecard.copyTo(exampleFolder, exampleNotecard.name + ' - Copy Only ' + UUID.random().toString().substring(0, 8));
+        copyOnly.permissions.nextOwnerMask = PermissionMask.Copy;
+        await copyOnly.update();
+
+        const modOnly = await exampleNotecard.copyTo(exampleFolder, exampleNotecard.name + ' - Mod Only ' + UUID.random().toString().substring(0, 8));
+        modOnly.permissions.nextOwnerMask = PermissionMask.Modify;
+        await modOnly.update();
+
+        const transOnly = await exampleNotecard.copyTo(exampleFolder, exampleNotecard.name + ' - Trans Only ' + UUID.random().toString().substring(0, 8));
+        transOnly.permissions.nextOwnerMask = PermissionMask.Transfer;
+        await transOnly.update();
 
         let exampleScript = exampleFolder.items.find(f => f.name === exampleScriptName);
         if (exampleScript === undefined)

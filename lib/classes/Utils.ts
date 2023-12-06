@@ -11,8 +11,8 @@ import { Logger } from './Logger';
 import { GlobalPosition } from './public/interfaces/GlobalPosition';
 import { Quaternion } from './Quaternion';
 import { Vector3 } from './Vector3';
-import Timeout = NodeJS.Timeout;
 import * as crypto from 'crypto';
+import Timeout = NodeJS.Timeout;
 
 export class Utils
 {
@@ -32,6 +32,11 @@ export class Utils
     static SHA1String(str: string): string
     {
         return crypto.createHash('sha1').update(str).digest('hex');
+    }
+
+    static MD5String(str: string): string
+    {
+        return crypto.createHash('md5').update(str).digest('hex');
     }
 
     static BufferToStringSimple(buf: Buffer): string
@@ -189,6 +194,8 @@ export class Utils
                 return 'person';
             case InventoryType.Settings:
                 return 'settings';
+            case InventoryType.Material:
+                return 'material';
             default:
                 console.error('Unknown inventory type: ' + InventoryType[type]);
                 return 'texture';
@@ -233,6 +240,8 @@ export class Utils
                 return AssetType.Widget;
             case HTTPAssets.ASSET_PERSON:
                 return AssetType.Person;
+            case HTTPAssets.ASSET_MATERIAL:
+                return AssetType.Material;
             default:
                 return 0;
         }
@@ -276,6 +285,8 @@ export class Utils
                 return HTTPAssets.ASSET_PERSON;
             case AssetType.Widget:
                 return HTTPAssets.ASSET_WIDGET;
+            case AssetType.Material:
+                return HTTPAssets.ASSET_MATERIAL;
             default:
                 return HTTPAssets.ASSET_TEXTURE;
         }
@@ -314,6 +325,8 @@ export class Utils
                 return InventoryType.Wearable;
             case HTTPAssets.ASSET_MESH:
                 return InventoryType.Mesh;
+            case HTTPAssets.ASSET_MATERIAL:
+                return InventoryType.Material;
             default:
                 return 0;
         }
@@ -417,7 +430,7 @@ export class Utils
         {
             hex = '0' + hex;
         }
-        return new Long(parseInt(hex.substr(8), 16), parseInt(hex.substr(0, 8), 16));
+        return new Long(parseInt(hex.substring(8), 16), parseInt(hex.substring(0, 8), 16));
     }
 
     static ReadRotationFloat(buf: Buffer, pos: number): number
@@ -682,7 +695,7 @@ export class Utils
         }
         else
         {
-            return str.substr(0, index - 1);
+            return str.substring(0, index - 1);
         }
     }
 
@@ -923,8 +936,8 @@ export class Utils
             const sep = line.indexOf(' ');
             if (sep > 0)
             {
-                key = line.substr(0, sep);
-                value = line.substr(sep + 1);
+                key = line.substring(0, sep);
+                value = line.substring(sep + 1);
             }
         }
         else if (line.length === 1)
@@ -957,7 +970,7 @@ export class Utils
     {
         return new Promise<any>((resolve, reject) =>
         {
-            xml2js.parseString(input, (err: Error, result: any) =>
+            xml2js.parseString(input, (err: Error | null, result: any) =>
             {
                 if (err)
                 {
@@ -968,6 +981,28 @@ export class Utils
                     resolve(result);
                 }
             });
+        });
+    }
+
+    public static getNotecardLine(lineObj: {
+        lines: string[],
+        lineNum: number,
+        pos: number
+    }): string
+    {
+        const line = lineObj.lines[lineObj.lineNum++];
+        lineObj.pos += Buffer.byteLength(line) + 1;
+        return line.replace(/\r/, '').trim().replace(/[\t ]+/g, ' ');
+    }
+
+    public static sleep(ms: number): Promise<void>
+    {
+        return new Promise((resolve) =>
+        {
+            setTimeout(() =>
+            {
+                resolve();
+            }, ms)
         });
     }
 }

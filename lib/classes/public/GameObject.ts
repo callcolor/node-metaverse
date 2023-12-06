@@ -55,8 +55,10 @@ import { Subject } from 'rxjs';
 import { RezScriptMessage } from '../messages/RezScript';
 import { PermissionMask } from '../../enums/PermissionMask';
 import { AssetType } from '../../enums/AssetType';
+import { LLGLTFMaterialOverride } from '../LLGLTFMaterialOverride';
 
 import * as uuid from 'uuid';
+import { Logger } from '../Logger';
 
 export class GameObject implements IGameObjectData
 {
@@ -379,6 +381,21 @@ export class GameObject implements IGameObjectData
             {
                 const buf = Buffer.from(prop, 'base64');
                 go.TextureEntry = TextureEntry.from(buf);
+            }
+            if (go.TextureEntry && shape['MatOvrd'] && Array.isArray(shape['MatOvrd']) && shape['MatOvrd'].length > 0)
+            {
+                const tex = Buffer.from(shape['MatOvrd'][0], 'base64');
+                let pos = 0;
+                const entryCount = tex.readUInt8(pos++);
+                for (let x = 0; x < entryCount; x++)
+                {
+                    const te_index = tex.readUInt8(pos++);
+                    const len = tex.readUInt16LE(pos++);
+                    pos++;
+                    const json = tex.slice(pos, pos + len).toString('utf-8');
+                    pos = pos + len;
+                    go.TextureEntry.gltfMaterialOverrides.set(te_index, LLGLTFMaterialOverride.fromFullMaterialJSON(json));
+                }
             }
             if ((prop = Utils.getFromXMLJS(shape, 'PathBegin')) !== undefined)
             {
@@ -838,7 +855,7 @@ export class GameObject implements IGameObjectData
         return Utils.waitOrTimeOut<void>(this.onTextureUpdate, timeout);
     }
 
-    async rezScript(name: string, description: string, perms: PermissionMask = PermissionMask.All): Promise<InventoryItem>
+    async rezScript(name: string, description: string, perms: PermissionMask = 532480 as PermissionMask): Promise<InventoryItem>
     {
         const rezScriptMsg = new RezScriptMessage();
         rezScriptMsg.AgentData = {
@@ -930,8 +947,13 @@ export class GameObject implements IGameObjectData
         throw new Error('Failed to add script to object');
     }
 
-    updateInventory(): Promise<void>
+    public async updateInventory(): Promise<void>
     {
+        if (this.PCode === PCode.Avatar)
+        {
+            return;
+        }
+
         const req = new RequestTaskInventoryMessage();
         req.AgentData = {
             AgentID: this.region.agent.agentID,
@@ -957,8 +979,15 @@ export class GameObject implements IGameObjectData
                 return FilterResponse.Match;
             }
         });
-        const fileName = Utils.BufferToStringSimple(inventory.InventoryData.Filename);
+        if (inventory.InventoryData.Filename.length === 0)
+        {
+            // Inventory is empty
+            this.inventory = [];
+            this.resolvedInventory = true;
+            return;
+        }
 
+        const fileName = Utils.BufferToStringSimple(inventory.InventoryData.Filename);
         const file = await this.region.circuit.XferFileDown(fileName, true, false, UUID.zero(), AssetType.Unknown, true);
         this.inventory = [];
         if (file.length === 0)
@@ -974,11 +1003,12 @@ export class GameObject implements IGameObjectData
             const str = file.toString('utf-8');
             const lineObj =  {
                 lines: str.replace(/\r\n/g, '\n').split('\n'),
-                lineNum: 0
+                lineNum: 0,
+                pos: 0
             };
             while (lineObj.lineNum < lineObj.lines.length)
             {
-                const line = lineObj.lines[lineObj.lineNum++];
+                const line = Utils.getNotecardLine(lineObj);
                 const result = Utils.parseLine(line);
                 if (result.key !== null)
                 {
@@ -1019,7 +1049,7 @@ export class GameObject implements IGameObjectData
                                     }
                                     else if (result.key === 'name')
                                     {
-                                        name = result.value.substr(0, result.value.indexOf('|'));
+                                        name = result.value.substring(0, result.value.indexOf('|'));
                                     }
                                 }
                             }
@@ -1031,11 +1061,12 @@ export class GameObject implements IGameObjectData
                             */
                             break;
                         case 'inv_item':
-                            this.inventory.push(InventoryItem.fromAsset(lineObj, this, this.region.agent));
+                            this.inventory.push(InventoryItem.fromEmbeddedAsset(lineObj, this, this.region.agent));
                             break;
                     }
                 }
             }
+            this.resolvedInventory = true;
         }
     }
 
@@ -1484,17 +1515,51 @@ export class GameObject implements IGameObjectData
 
     private async getXML(xml: XMLNode, rootPrim: GameObject, linkNum: number, rootNode?: string): Promise<void>
     {
-        if (this.resolvedAt === undefined || this.resolvedAt === 0 || this.resolvedInventory === false)
+        const resolver = this.region?.resolver;
+        if (resolver)
         {
-            await this.region.resolver.resolveObjects([this], true, false, false);
+            if (this.resolvedAt === undefined)
+            {
+                try
+                {
+                    await resolver.resolveObjects([this], { includeTempObjects: true });
+                }
+                catch (e: unknown)
+                {
+                    Logger.Error(e);
+                }
+            }
+            if (!this.resolvedInventory)
+            {
+                try
+                {
+                    await resolver.getInventory(this);
+                }
+                catch (e: unknown)
+                {
+                    Logger.Error(e);
+                }
+            }
+            if (this.calculatedLandImpact === undefined)
+            {
+                try
+                {
+                    await resolver.getCosts([this]);
+                }
+                catch (e: unknown)
+                {
+                    Logger.Error(e);
+                }
+            }
         }
+
         let root = xml;
         if (rootNode)
         {
             root = xml.ele(rootNode);
         }
         const sceneObjectPart = root.ele('SceneObjectPart').att('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance').att('xmlns:xsd', 'http://www.w3.org/2001/XMLSchema');
-        sceneObjectPart.ele('AllowedDrop', (this.Flags !== undefined && (this.Flags & PrimFlags.AllowInventoryDrop) !== 0) ? 'true' : 'false');
+        sceneObjectPart.ele('AllowedDrop', (this.Flags !== undefined && (this.Flags & PrimFlags.AllowInventoryDrop) === PrimFlags.AllowInventoryDrop) ? 'true' : 'false');
         UUID.getXML(sceneObjectPart.ele('CreatorID'), this.creatorID);
         UUID.getXML(sceneObjectPart.ele('FolderID'), this.folderID);
         sceneObjectPart.ele('InventorySerial', this.inventorySerial);
@@ -1502,7 +1567,10 @@ export class GameObject implements IGameObjectData
         sceneObjectPart.ele('LocalId', this.ID);
         sceneObjectPart.ele('Name', this.name);
         sceneObjectPart.ele('Material', this.Material);
-        sceneObjectPart.ele('RegionHandle', this.region.regionHandle.toString());
+        if (this.region)
+        {
+            sceneObjectPart.ele('RegionHandle', this.region.regionHandle.toString());
+        }
         Vector3.getXML(sceneObjectPart.ele('GroupPosition'), rootPrim.Position);
         if (rootPrim === this)
         {
@@ -1535,6 +1603,38 @@ export class GameObject implements IGameObjectData
             if (this.TextureEntry)
             {
                 shape.ele('TextureEntry', this.TextureEntry.toBase64());
+
+                if (this.TextureEntry.gltfMaterialOverrides)
+                {
+                    const overrideKeys = Array.from(this.TextureEntry.gltfMaterialOverrides.keys());
+                    const numEntries = overrideKeys.length;
+
+                    if (numEntries > 0)
+                    {
+                        const buf: Buffer[] = [];
+
+                        const num = Buffer.allocUnsafe(1);
+                        num.writeUInt8(numEntries, 0);
+                        buf.push(num)
+                        for (const overrideKey of overrideKeys)
+                        {
+                            const override = this.TextureEntry.gltfMaterialOverrides.get(overrideKey);
+                            if (override === undefined)
+                            {
+                                continue;
+                            }
+
+                            const header = Buffer.allocUnsafe(3);
+                            header.writeUInt8(overrideKey, 0);
+
+                            const json = override.getFullMaterialJSON();
+                            header.writeUInt16LE(json.length, 1);
+                            buf.push(header);
+                            buf.push(Buffer.from(json, 'utf-8'));
+                        }
+                        shape.ele('MatOvrd', Buffer.concat(buf).toString('base64'));
+                    }
+                }
             }
             if (this.extraParams)
             {
