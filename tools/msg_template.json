@@ -7957,6 +7957,18 @@
                         "size": "1"
                     }
                 ]
+            },
+            {
+                "name": "AgentInfo",
+                "type": "Variable",
+                "count": 1,
+                "params": [
+                    {
+                        "name": "AgentID",
+                        "type": "LLUUID",
+                        "size": 1
+                    }
+                ]
             }
         ]
     },
