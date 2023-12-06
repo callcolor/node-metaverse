@@ -513,6 +513,16 @@ export class EventQueueClient
                                         // }
                                         break;
                                     }
+                                    case 'RequiredVoiceVersion':
+                                        // {
+                                        //     "body": {
+                                        //         "major_version": number,
+                                        //         "minor_version": number,
+                                        //         "region_name": string
+                                        //     },
+                                        //     "message": "RequiredVoiceVersion"
+                                        // }
+                                        break;
                                     default:
                                         console.log('Unhandled event:');
                                         console.log(JSON.stringify(event, null, 4));

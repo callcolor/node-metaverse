@@ -509,7 +509,7 @@ export class GameObject implements IGameObjectData
                 const flexiForceZ = Utils.getFromXMLJS(shape, 'FlexiForceZ');
                 if (flexiSoftness !== false &&
                     flexiTension !== false &&
-                    flexiDrag && false &&
+                    flexiDrag !== false &&
                     flexiGravity !== false &&
                     flexiWind !== false &&
                     flexiForceX !== false &&
@@ -838,7 +838,7 @@ export class GameObject implements IGameObjectData
         return Utils.waitOrTimeOut<void>(this.onTextureUpdate, timeout);
     }
 
-    async rezScript(name: string, description: string, perms: PermissionMask = 532480): Promise<InventoryItem>
+    async rezScript(name: string, description: string, perms: PermissionMask = PermissionMask.All): Promise<InventoryItem>
     {
         const rezScriptMsg = new RezScriptMessage();
         rezScriptMsg.AgentData = {
@@ -1070,23 +1070,23 @@ export class GameObject implements IGameObjectData
     }
 
     async setShape(PathCurve?: number,
-                   ProfileCurve?: number,
-                   PathBegin?: number,
-                   PathEnd?: number,
-                   PathScaleX?: number,
-                   PathScaleY?: number,
-                   PathShearX?: number,
-                   PathShearY?: number,
-                   PathTwist?: number,
-                   PathTwistBegin?: number,
-                   PathRadiusOffset?: number,
-                   PathTaperX?: number,
-                   PathTaperY?: number,
-                   PathRevolutions?: number,
-                   PathSkew?: number,
-                   ProfileBegin?: number,
-                   ProfileEnd?: number,
-                   ProfileHollow?: number): Promise<void>
+        ProfileCurve?: number,
+        PathBegin?: number,
+        PathEnd?: number,
+        PathScaleX?: number,
+        PathScaleY?: number,
+        PathShearX?: number,
+        PathShearY?: number,
+        PathTwist?: number,
+        PathTwistBegin?: number,
+        PathRadiusOffset?: number,
+        PathTaperX?: number,
+        PathTaperY?: number,
+        PathRevolutions?: number,
+        PathSkew?: number,
+        ProfileBegin?: number,
+        ProfileEnd?: number,
+        ProfileHollow?: number): Promise<void>
     {
         this.PathCurve = this.setIfDefined(this.PathCurve, PathCurve);
         this.ProfileCurve = this.setIfDefined(this.ProfileCurve, ProfileCurve);
@@ -1933,7 +1933,6 @@ export class GameObject implements IGameObjectData
             if (item === null)
             {
                 throw new Error('Failed to drop inventory into object contents - Inventory item ' + inventoryItem.toString() + ' not found');
-                return;
             }
             inventoryItem = item;
         }
