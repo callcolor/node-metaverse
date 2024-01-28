@@ -579,8 +579,8 @@ export class Region
                                     evt.pctSteppedCharacters = value;
                                     break;
                             }
-                            this.clientEvents.onSimStats.next(evt);
                         }
+                        this.clientEvents.onSimStats.next(evt);
                     }
                     break;
                 }
