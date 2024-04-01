@@ -488,10 +488,10 @@ export class ObjectStoreLite implements IObjectStore
             SessionID: this.circuit.sessionID
         };
         selectObject.ObjectData = [
-                {
-                    'ObjectLocalID': localID
-                }
-            ];
+            {
+                'ObjectLocalID': localID
+            }
+        ];
         this.circuit.sendMessage(selectObject, PacketFlags.Reliable);
 
         try
