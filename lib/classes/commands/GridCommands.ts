@@ -171,30 +171,24 @@ export class GridCommands extends CommandsBase
                         // Check if avatar is within our bounds
                         if (data.X >= minX && data.X <= maxX && data.Y >= minY && data.Y <= maxY)
                         {
+                            for (let index = 0; index < data.Extra; index++)
+                            {
+                                response.avatars.push(new Vector2([
+                                    data.X,
+                                    data.Y
+                                ]));
+                            }
                             found = true;
                         }
                     }
                     if (found)
                     {
-                        return FilterResponse.Finish;
-                    }
-                    else
-                    {
-                        return FilterResponse.NoMatch;
-                    }
-                }).then((responseMsg2: MapItemReplyMessage) =>
-                {
-                    for (const data of responseMsg2.Data)
-                    {
-                        for (let index = 0; index < data.Extra; index++)
+                        setTimeout(() =>
                         {
-                            response.avatars.push(new Vector2([
-                                data.X,
-                                data.Y
-                            ]));
-                        }
+                            resolve(response);
+                        }, 1000);
                     }
-                    resolve(response);
+                    return 0;
                 }).catch((err) =>
                 {
                     reject(err);
